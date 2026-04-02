@@ -73,7 +73,7 @@
                     Acquire this Domain
                 </a>
                 <!-- Email Button: Straight mailto without JS blocks -->
-                <a href="mailto:adelhub123@gmail.com" class="px-10 py-5 bg-white bg-opacity-10 border border-white border-opacity-30 text-white hover:bg-white hover:text-blue-900 font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-xl">
+                <a href="mailto:adelhub123@gmail.com?subject=Inquiry: kitvet.com" class="px-10 py-5 bg-white bg-opacity-10 border border-white border-opacity-30 text-white hover:bg-white hover:text-blue-900 font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-xl">
                     Email Us Directly
                 </a>
             </div>
@@ -147,7 +147,7 @@
                      ACTION: Replace 'YOUR_FORMSPREE_HASH_ID' below with your 8-character ID. 
                      Example: https://formspree.io/f/mqkrwyog
                 -->
-                <form action="https://formspree.io/f/mqkrwyog" method="POST" id="offerForm" class="space-y-8">
+                <form action="https://formspree.io/f/mvzvbqya" method="POST" id="offerForm" class="space-y-8">
                     <!-- Security: Active Honeypot -->
                     <input type="text" name="_gotcha" style="display:none">
                     
@@ -169,10 +169,10 @@
                             <label for="offer" class="text-sm font-bold text-slate-700">Your Strategic Offer (USD)</label>
                             <div class="relative">
                                 <span class="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
-                                <input type="number" id="offer" name="offer" required min="2000" placeholder="2,000" 
+                                <input type="number" id="offer" name="offer" required placeholder="Offer amount" 
                                        class="w-full pl-12 pr-6 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-slate-900 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all">
                             </div>
-                            <p class="text-[10px] text-slate-400 mt-2 px-2 uppercase tracking-widest font-bold text-center italic">Minimum Strategic Entry: 2,000 USD</p>
+                            <p class="text-[10px] text-slate-400 mt-2 px-2 uppercase tracking-widest font-bold text-center italic">Professional Entry Recommended</p>
                         </div>
 
                         <div class="space-y-2">
@@ -188,6 +188,19 @@
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </button>
                 </form>
+
+                <!-- Success Message (Initially Hidden) -->
+                <div id="successMessage" class="hidden text-center py-12 space-y-6">
+                    <div class="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 transform scale-125">
+                        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <h3 class="text-3xl font-bold text-slate-800">Inquiry Received</h3>
+                    <div class="space-y-3">
+                        <p class="text-lg text-slate-600">Thank you! Your inquiry for <span class="font-bold text-blue-600">kitvet.com</span> has been transmitted securely.</p>
+                        <p class="text-sm text-slate-500">Our brokerage team will contact you at <span id="displayEmail" class="font-bold text-slate-700"></span> within 24 hours.</p>
+                    </div>
+                    <button onclick="window.location.reload()" class="mt-8 text-blue-600 font-bold hover:underline">Send another inquiry</button>
+                </div>
 
                 <!-- Secure Transaction Hub -->
                 <div class="mt-8 pt-8 border-t border-slate-100 flex flex-wrap justify-center gap-6 opacity-70">
@@ -230,20 +243,60 @@
         document.getElementById('year').textContent = new Date().getFullYear();
 
         const form = document.getElementById('offerForm');
-        form.addEventListener('submit', (e) => {
-            const offer = document.getElementById('offer').value;
-            const submitBtn = document.getElementById('submitBtn');
-            const btnText = submitBtn.querySelector('span');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = submitBtn.querySelector('span');
+        const successMessage = document.getElementById('successMessage');
+        const displayEmail = document.getElementById('displayEmail');
 
-            if (offer < 2000) {
-                alert('Minimum strategic offer for kitvet.com is 2,000 USD.');
-                e.preventDefault();
-                return;
-            }
-
+        async function handleSubmit(event) {
+            event.preventDefault();
+            
+            // Collect Form Data
+            const formData = new FormData(event.target);
+            const emailValue = formData.get('email');
+            
+            // Loading State
             btnText.textContent = "Processing Inquiry...";
+            submitBtn.disabled = true;
             submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
-        });
+
+            try {
+                const response = await fetch(event.target.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    // Success UI Sequence
+                    form.classList.add('hidden');
+                    displayEmail.textContent = emailValue;
+                    successMessage.classList.remove('hidden');
+                    successMessage.classList.add('animate-in', 'fade-in', 'slide-in-from-bottom-4', 'duration-700');
+                    
+                    // Smooth Scroll to message
+                    successMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    const data = await response.json();
+                    if (data.errors) {
+                        throw new Error(data.errors.map(error => error.message).join(", "));
+                    } else {
+                        throw new Error("Server communication error. Please try again.");
+                    }
+                }
+            } catch (error) {
+                alert(error.message || "Connection failed. Please check your network and try again.");
+                
+                // Revert Button State
+                btnText.textContent = "Initiate Inquiry";
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+        }
+
+        form.addEventListener('submit', handleSubmit);
     </script>
 </body>
 </html>
